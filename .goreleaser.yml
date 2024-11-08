@@ -5,14 +5,16 @@ builds:
   - id: babylond-linux-amd64
     main: ./cmd/babylond/main.go
     binary: babylond
-    #hooks:
-    #  pre:
-    #    - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm.x86_64.so -O /usr/local/lib/libwasmvm_muslc.x86_64.so
+    hooks:
+      pre:
+      - mkdir -p /tmp/libwasmvm
+      - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm.x86_64.so -O /tmp/libwasmvm/libwasmvm_muslc.x86_64.so
     goos:
       - linux
     goarch:
       - amd64
     env:
+      - LD_LIBRARY_PATH=/tmp/libwasmvm:$LD_LIBRARY_PATH
       - COSMWASM_VERSION=v2.1.3
       - GO111MODULE=on
     flags:
