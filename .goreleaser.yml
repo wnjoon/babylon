@@ -29,7 +29,7 @@ builds:
     tags:
       - netgo
       - ledger
-      - muslc
+      # - muslc
       - osusergo
 
 archives:
