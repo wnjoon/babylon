@@ -7,15 +7,12 @@ builds:
     binary: babylond
     hooks:
       pre:
-      - mkdir -p /tmp/libwasmvm
-      - wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm.x86_64.so -O /tmp/libwasmvm/libwasmvm_muslc.x86_64.so
+        - sudo wget https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm.x86_64.so -O /lib/libwasmvm_muslc.x86_64.so
     goos:
       - linux
     goarch:
       - amd64
     env:
-      - LD_LIBRARY_PATH=/tmp/libwasmvm:$LD_LIBRARY_PATH
-      - CGO_LDFLAGS="-L/tmp/libwasmvm -lwasmvm_muslc.x86_64"
       - COSMWASM_VERSION=v2.1.3
       - GO111MODULE=on
     flags:
