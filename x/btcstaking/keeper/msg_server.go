@@ -196,6 +196,7 @@ func (ms msgServer) getTimeInfoAndParams(
 
 // CreateBTCDelegation creates a BTC delegation
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
+	fmt.Printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ PARTY TIME")
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
