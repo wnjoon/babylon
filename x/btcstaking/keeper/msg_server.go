@@ -199,6 +199,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if !ctx.IsCheckTx() {
+		return nil, fmt.Errorf("jerome's banana error")
+	}
 
 	// 1. Parse the message into better domain format
 	parsedMsg, err := types.ParseCreateDelegationMessage(req)
