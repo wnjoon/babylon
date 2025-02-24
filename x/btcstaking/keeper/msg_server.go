@@ -200,6 +200,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if !ctx.IsCheckTx() {
+		fmt.Printf("~~~~~~~~~~~~~~~~~~~~~jerome's banana error~~~~~~~~~~~~~~~~~~~~~")
 		return nil, fmt.Errorf("jerome's banana error")
 	}
 
@@ -293,7 +294,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		ParamsVersion: paramsVersion,      // version of the params against which delegation was validated
 		BtcTipHeight:  timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
 	}
-	fmt.Printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ newBTCDel: %+v\n", newBTCDel)
 
 	// add this BTC delegation, and emit corresponding events
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
