@@ -140,9 +140,14 @@ func (d *BTCDelegation) GetStatus(
 		return BTCDelegationStatus_UNBONDED
 	}
 
-	// if the endheight is lower than the btc height + unbonding time
+	// if the endheight is not higher than the btc height + unbonding time
 	// the btc delegation should be considered expired
-	if btcHeight+d.UnbondingTime > d.EndHeight {
+	if btcHeight+d.UnbondingTime >= d.EndHeight {
+		// It is needed to use ">=" instead of just ">"
+		// to avoid processing both events at the same time
+		// Unbonding + Expired. If the unbonding request
+		// was about to be processed in the same block
+		// as the expired event.
 		return BTCDelegationStatus_EXPIRED
 	}
 
@@ -190,6 +195,16 @@ func (d *BTCDelegation) MustGetStakingTx() *wire.MsgTx {
 	}
 
 	return stakingTx
+}
+
+func (d *BTCDelegation) MustGetUnbondingTx() *wire.MsgTx {
+	unbondingTx, err := bbn.NewBTCTxFromBytes(d.BtcUndelegation.UnbondingTx)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return unbondingTx
 }
 
 func (d *BTCDelegation) ValidateBasic() error {

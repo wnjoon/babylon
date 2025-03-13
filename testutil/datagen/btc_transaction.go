@@ -304,6 +304,15 @@ func CreateBlockWithTransaction(
 	ph *wire.BlockHeader,
 	tx *wire.MsgTx,
 ) *BtcHeaderWithProof {
+	proof, _ := CreateWireBlockWithTransaction(r, ph, tx)
+	return proof
+}
+
+func CreateWireBlockWithTransaction(
+	r *rand.Rand,
+	ph *wire.BlockHeader,
+	tx *wire.MsgTx,
+) (*BtcHeaderWithProof, *wire.BlockHeader) {
 	var transactions []*wire.MsgTx
 	// height does not matter here, as it is used only for calculation of reward
 	transactions = append(transactions, createCoinbaseTx(int32(889), &chaincfg.SimNetParams))
@@ -336,7 +345,7 @@ func CreateBlockWithTransaction(
 	return &BtcHeaderWithProof{
 		HeaderBytes: headerBytes,
 		SpvProof:    proof,
-	}
+	}, randHeader
 }
 
 func CreateDummyTx() *wire.MsgTx {
@@ -386,6 +395,30 @@ func GenRandomTx(r *rand.Rand) *wire.MsgTx {
 			},
 		},
 		LockTime: 0,
+	}
+
+	return tx
+}
+
+func GenRandomTxWithOutputs(r *rand.Rand, numOutputs int) *wire.MsgTx {
+	// structure of the below tx is from https://github.com/btcsuite/btcd/blob/master/wire/msgtx_test.go
+	tx := &wire.MsgTx{
+		Version: 1,
+		TxIn: []*wire.TxIn{
+			{
+				PreviousOutPoint: wire.OutPoint{
+					Hash:  GenRandomBtcdHash(r),
+					Index: r.Uint32(),
+				},
+				SignatureScript: GenRandomByteArray(r, 10),
+				Sequence:        r.Uint32(),
+			},
+		},
+		LockTime: 0,
+	}
+
+	for i := 0; i < numOutputs; i++ {
+		tx.AddTxOut(wire.NewTxOut(r.Int63(), GenRandomByteArray(r, 80)))
 	}
 
 	return tx

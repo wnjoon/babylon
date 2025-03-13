@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
@@ -130,7 +131,10 @@ func (k Keeper) handleActivatedFinalityProvider(ctx context.Context, fpPk *bbn.B
 	signingInfo, err := k.FinalityProviderSigningTracker.Get(ctx, fpPk.MustMarshal())
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if err == nil {
-		signingInfo.StartHeight = sdkCtx.BlockHeight()
+		// reset signing info
+		signingInfo.StartHeight = sdkCtx.HeaderInfo().Height
+		signingInfo.JailedUntil = time.Unix(0, 0)
+		signingInfo.MissedBlocksCounter = 0
 	} else if errors.Is(err, collections.ErrNotFound) {
 		signingInfo = ftypes.NewFinalityProviderSigningInfo(
 			fpPk,
@@ -204,6 +208,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				panic(err) // only programming error
 			}
 
+			delParams := k.BTCStakingKeeper.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+
 			switch delEvent.NewState {
 			case types.BTCDelegationStatus_ACTIVE:
 				// newly active BTC delegation
@@ -223,12 +229,18 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 					k.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
 				})
 			case types.BTCDelegationStatus_UNBONDED:
-				// add the unbonded BTC delegation to the map
-				k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)
+				// In case of delegation transtioning from phase-1 it is possible that
+				// somebody unbonds before receiving the required covenant signatures.
+				if btcDel.HasCovenantQuorums(delParams.CovenantQuorum) {
+					// add the unbonded BTC delegation to the map
+					k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)
+				}
 			case types.BTCDelegationStatus_EXPIRED:
 				types.EmitExpiredDelegationEvent(sdkCtx, delStkTxHash)
-
-				if !btcDel.IsUnbondedEarly() {
+				// We process expired event if:
+				// - it hasn't unbonded early
+				// - it has all required covenant signatures
+				if !btcDel.IsUnbondedEarly() && btcDel.HasCovenantQuorums(delParams.CovenantQuorum) {
 					// only adds to the new unbonded list if it hasn't
 					// previously unbonded with types.BTCDelegationStatus_UNBONDED
 					k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)
